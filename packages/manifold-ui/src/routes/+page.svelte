@@ -82,8 +82,9 @@
 
   const colorWheelHandler: DragHandler = (dx, dy, current, start) => {
     // Map drag position to hue (angle) and saturation (distance)
+    // atan2(dx, -dy) gives clockwise-from-top, matching CSS conic-gradient
     const radius = 72; // matches WHEEL_RADIUS
-    const angle = Math.atan2(-dy, dx);
+    const angle = Math.atan2(dx, -dy);
     const dist = Math.sqrt(dx * dx + dy * dy);
     const hue = ((angle * 180 / Math.PI) + 360) % 360;
     const sat = Math.min(100, (dist / radius) * 100);

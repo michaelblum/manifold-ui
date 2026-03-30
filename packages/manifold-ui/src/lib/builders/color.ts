@@ -124,21 +124,23 @@ export function cmykToRgb(c: number, m: number, y: number, k: number): RGB {
 
 // --- Angle / position helpers for the color wheel ---
 
-/** Convert XY offset from center to hue (degrees) and saturation (0-100) */
+/** Convert XY offset from center to hue (degrees) and saturation (0-100).
+ *  Uses clockwise-from-top convention matching CSS conic-gradient. */
 export function xyToHueSat(dx: number, dy: number, radius: number): { h: number; s: number } {
-  const angle = Math.atan2(-dy, dx); // -dy because screen Y is inverted
-  let h = (angle * 180 / Math.PI + 360) % 360;
+  const angle = Math.atan2(dx, -dy); // clockwise from top
+  const h = (angle * 180 / Math.PI + 360) % 360;
   const dist = Math.sqrt(dx * dx + dy * dy);
   const s = Math.min(100, (dist / radius) * 100);
   return { h: Math.round(h), s: Math.round(s) };
 }
 
-/** Convert hue (degrees) and saturation (0-100) to XY offset from center */
+/** Convert hue (degrees) and saturation (0-100) to XY offset from center.
+ *  Uses clockwise-from-top convention matching CSS conic-gradient. */
 export function hueSatToXy(h: number, s: number, radius: number): { x: number; y: number } {
   const angle = (h * Math.PI) / 180;
   const dist = (s / 100) * radius;
   return {
-    x: Math.cos(angle) * dist,
-    y: -Math.sin(angle) * dist // -y because screen Y is inverted
+    x: Math.sin(angle) * dist,   // clockwise from top
+    y: -Math.cos(angle) * dist   // top = negative y in screen coords
   };
 }

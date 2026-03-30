@@ -259,7 +259,8 @@
 
     // Current position on wheel (dx/dy are pixels from drag origin)
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(-dy, dx);
+    // atan2(dx, -dy) gives clockwise-from-top angle, matching CSS conic-gradient
+    const angle = Math.atan2(dx, -dy);
     const hue = ((angle * 180 / Math.PI) + 360) % 360;
     const sat = Math.min(100, (dist / r) * 100);
 
@@ -370,12 +371,11 @@
 
     } else {
       // BASE MODE: HSL color wheel
-      // Conic gradient for hue, radial gradient for saturation (white center)
-      // Map mouse position 1:1, clamped to wheel radius
-      const dotDist = Math.min(dist, r - 4);
-      const dotAngle = angle;
-      const dotX = cx + Math.cos(dotAngle) * dotDist;
-      const dotY = cy - Math.sin(dotAngle) * dotDist;
+      // Dot tracks mouse position directly, clamped to circle
+      const maxDist = r - 4;
+      const clampScale = dist > maxDist ? maxDist / (dist || 1) : 1;
+      const dotX = cx + dx * clampScale;
+      const dotY = cy + dy * clampScale;
 
       return `<div style="
         width: ${WHEEL_SIZE}px; height: ${WHEEL_SIZE}px;
