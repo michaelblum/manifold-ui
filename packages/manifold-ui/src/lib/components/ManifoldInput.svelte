@@ -307,6 +307,25 @@
     downPointerId = -1;
   }
 
+  function onLostPointerCapture(e: PointerEvent) {
+    // Pointer capture was lost (window blur, browser interrupt, etc.)
+    // Clean up drag state to prevent HUD from sticking
+    if (controller.dragState.active && controller.dragState.member === member) {
+      controller.commit();
+      controller.emitDragEnd({ groupId, tier: 'input', committed: true });
+
+      controller.dragState.active = false;
+      controller.dragState.hudType = null;
+      controller.dragState.snapshot = null;
+      controller.dragState.member = null;
+      controller.dragState.dragDx = 0;
+      controller.dragState.dragDy = 0;
+    }
+
+    pointerDown = false;
+    downPointerId = -1;
+  }
+
   // Escape during drag reverts
   function onKeyDownDrag(e: KeyboardEvent) {
     if (e.key === 'Escape' && controller.dragState.active && controller.dragState.member === member) {
@@ -375,6 +394,7 @@
       onpointermove={onPointerMove}
       onpointerup={onPointerUp}
       onpointercancel={onPointerCancel}
+      onlostpointercapture={onLostPointerCapture}
       onkeydown={onKeyDown}
       onfocusin={() => controller.setActiveGroup(groupId)}
     >
