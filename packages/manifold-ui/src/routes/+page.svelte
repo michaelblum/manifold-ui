@@ -2,7 +2,6 @@
   import Manifold from '$lib/components/Manifold.svelte';
   import ManifoldPanel from '$lib/components/ManifoldPanel.svelte';
   import ManifoldGroup from '$lib/components/ManifoldGroup.svelte';
-  import ManifoldInput from '$lib/components/ManifoldInput.svelte';
   import ManifoldCompoundInput from '$lib/components/ManifoldCompoundInput.svelte';
   import { createManifold } from '$lib/builders/manifold.svelte';
   import { hslToRgb, rgbToHsl } from '$lib/builders/color';
@@ -78,43 +77,7 @@
   let transformValues = $state<Record<string, Record<string, number>> | undefined>();
 
   // ===========================================
-  // Demo 2: Compositional API — RGBA color
-  // ===========================================
-
-  const colorSliderHandler: DragHandler = (dx, dy, current, start, member) => {
-    current[member] = Math.max(0, Math.min(255, start[member] - dy * 0.5));
-  };
-
-  const alphaSliderHandler: DragHandler = (dx, dy, current, start, member) => {
-    current[member] = Math.max(0, Math.min(1, start[member] - dy * 0.005));
-  };
-
-  const colorController = createManifold({
-    groups: [
-      {
-        id: 'color',
-        members: ['r', 'g', 'b'],
-        initial: { r: 157, g: 78, b: 221 },
-        config: { min: 0, max: 255, step: 1 },
-        inputDrag: {
-          base: { type: 'slider_1d', handler: colorSliderHandler }
-        }
-      },
-      {
-        id: 'alpha',
-        members: ['a'],
-        labels: ['alpha'],
-        initial: { a: 1 },
-        config: { min: 0, max: 1, step: 0.01 },
-        inputDrag: {
-          base: { type: 'slider_1d', handler: alphaSliderHandler }
-        }
-      }
-    ]
-  });
-
-  // ===========================================
-  // Demo 4: Color Wheel HUD
+  // Demo 2: Color Wheel HUD
   // ===========================================
 
   const colorWheelHandler: DragHandler = (dx, dy, current, start) => {
@@ -167,7 +130,7 @@
   );
 
   let colorPreview = $derived(
-    `rgba(${Math.round(colorController.values.color?.r ?? 0)}, ${Math.round(colorController.values.color?.g ?? 0)}, ${Math.round(colorController.values.color?.b ?? 0)}, ${colorController.values.alpha?.a ?? 1})`
+    `rgba(${Math.round(wheelController.values.color?.r ?? 0)}, ${Math.round(wheelController.values.color?.g ?? 0)}, ${Math.round(wheelController.values.color?.b ?? 0)}, ${wheelController.values.color?.a ?? 1})`
   );
 </script>
 
@@ -190,34 +153,7 @@
       {/if}
     </section>
 
-    <!-- Demo 2: Compositional API -->
-    <section class="demo-section">
-      <h2 class="demo-heading">Compositional API</h2>
-      <p class="demo-desc">
-        An RGBA color picker using ManifoldPanel + ManifoldGroup + ManifoldInput.
-      </p>
-
-      <ManifoldPanel controller={colorController} title="Color">
-        <ManifoldGroup id="color" label="RGB">
-          <ManifoldInput member="r" label="R" />
-          <ManifoldInput member="g" label="G" />
-          <ManifoldInput member="b" label="B" />
-        </ManifoldGroup>
-        <ManifoldGroup id="alpha" label="Opacity">
-          <ManifoldInput member="a" label="A" />
-        </ManifoldGroup>
-      </ManifoldPanel>
-
-      <div class="color-preview-row">
-        <div
-          class="color-swatch"
-          style="background: {colorPreview};"
-        ></div>
-        <code class="color-value">{colorPreview}</code>
-      </div>
-    </section>
-
-    <!-- Demo 3: Color Wheel HUD -->
+    <!-- Demo 2: Color Wheel HUD -->
     <section class="demo-section">
       <h2 class="demo-heading">Color Wheel HUD</h2>
       <p class="demo-desc">
@@ -253,16 +189,13 @@
         Drag to adjust all values. Click to type.
       </p>
 
-      <ManifoldPanel controller={colorController} title="Color (Compound)">
-        <ManifoldGroup id="color" label="RGB">
+      <ManifoldPanel controller={wheelController} title="Color (Compound)">
+        <ManifoldGroup id="color" label="RGBA">
           <ManifoldCompoundInput
-            members={['r', 'g', 'b']}
-            pattern={'rgb({r}, {g}, {b})'}
+            members={['r', 'g', 'b', 'a']}
+            pattern={'rgba({r}, {g}, {b}, {a})'}
             label="Color"
           />
-        </ManifoldGroup>
-        <ManifoldGroup id="alpha" label="Opacity">
-          <ManifoldInput member="a" label="A" />
         </ManifoldGroup>
       </ManifoldPanel>
 
