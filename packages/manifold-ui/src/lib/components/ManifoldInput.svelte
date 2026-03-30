@@ -121,8 +121,20 @@
   }
 
   // --- Pointer / Drag ---
+  function onPointerDownWhileEditing(e: PointerEvent) {
+    // When editing, allow native text selection on click.
+    // Track pointer for potential drag-out-of-edit-mode.
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerDown = true;
+    downX = e.clientX;
+    downY = e.clientY;
+    downPointerId = e.pointerId;
+    downPointerType = e.pointerType as 'mouse' | 'touch' | 'pen';
+    // Don't preventDefault or setPointerCapture yet — let native text selection work.
+    // If drag threshold is crossed, we'll cancel editing and start drag.
+  }
+
   function onPointerDown(e: PointerEvent) {
-    if (editing) return;
     // Only primary button for mouse
     if (e.pointerType === 'mouse' && e.button !== 0) return;
 
@@ -155,6 +167,12 @@
       if (!dragConfig) {
         // No drag configured -- treat as click
         return;
+      }
+
+      // If we were editing, cancel edit and capture pointer for drag
+      if (editing) {
+        cancelEdit();
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       }
 
       // Snapshot group values for revert
@@ -298,6 +316,10 @@
       oninput={(e) => { editText = (e.currentTarget as HTMLInputElement).value; }}
       onblur={commitEdit}
       onkeydown={onKeyDown}
+      onpointerdown={onPointerDownWhileEditing}
+      onpointermove={onPointerMove}
+      onpointerup={onPointerUp}
+      onpointercancel={onPointerCancel}
       role="spinbutton"
       aria-label="{displayLabel}"
       aria-valuenow={value}
