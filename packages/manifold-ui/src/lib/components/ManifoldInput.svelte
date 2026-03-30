@@ -221,14 +221,18 @@
       const dragConfig = getDragConfig();
 
       // Raw deltas from pointer origin
-      const rawDx = e.clientX - downX;
-      const rawDy = e.clientY - downY;
+      let rawDx = e.clientX - downX;
+      let rawDy = e.clientY - downY;
+
+      // Apply sensitivity (default 1, set to 0 to lock axis)
+      rawDx *= dragConfig?.sensitivityX ?? 1;
+      rawDy *= dragConfig?.sensitivityY ?? 1;
 
       // Apply axis inversion if configured
       const effectiveDx = dragConfig?.invertX ? -rawDx : rawDx;
       const effectiveDy = dragConfig?.invertY ? -rawDy : rawDy;
 
-      // Store inverted deltas so HUD visual matches the value direction
+      // Store deltas so HUD visual matches the value direction
       controller.dragState.dragDx = effectiveDx;
       controller.dragState.dragDy = effectiveDy;
 
@@ -441,7 +445,7 @@
   }
 
   .manifold-input-display {
-    cursor: ew-resize;
+    cursor: ns-resize;
     user-select: none;
     touch-action: none;
   }

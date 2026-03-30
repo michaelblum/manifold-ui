@@ -245,8 +245,13 @@
       updateModifierFromEvent(e);
 
       const dragConfig = getDragConfig();
-      const rawDx = e.clientX - downX;
-      const rawDy = e.clientY - downY;
+      let rawDx = e.clientX - downX;
+      let rawDy = e.clientY - downY;
+
+      // Apply sensitivity (default 1, set to 0 to lock axis)
+      rawDx *= dragConfig?.sensitivityX ?? 1;
+      rawDy *= dragConfig?.sensitivityY ?? 1;
+
       const effectiveDx = dragConfig?.invertX ? -rawDx : rawDx;
       const effectiveDy = dragConfig?.invertY ? -rawDy : rawDy;
 
@@ -395,7 +400,7 @@
   }
 
   .manifold-compound-display {
-    cursor: ew-resize;
+    cursor: crosshair;
     user-select: none;
     touch-action: none;
   }

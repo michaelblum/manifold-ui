@@ -86,7 +86,7 @@
     const angle = Math.atan2(-dy, dx);
     const dist = Math.sqrt(dx * dx + dy * dy);
     const hue = ((angle * 180 / Math.PI) + 360) % 360;
-    const sat = Math.min(100, (dist / (radius * 2)) * 100);
+    const sat = Math.min(100, (dist / radius) * 100);
     const rgb = hslToRgb(hue, sat, 50);
     current.r = rgb.r;
     current.g = rgb.g;
@@ -106,7 +106,8 @@
 
   const colorWheelAlphaHandler: DragHandler = (dx, dy, current, start) => {
     // Shift: alpha mode — dy controls opacity
-    current.a = Math.max(0, Math.min(1, (start.a ?? 1) - dy * 0.005));
+    // Scale to match WHEEL_SIZE (160px) = full 0-1 range
+    current.a = Math.max(0, Math.min(1, (start.a ?? 1) - dy / 160));
   };
 
   const wheelController = createManifold({

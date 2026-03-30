@@ -257,11 +257,11 @@
     const isAlpha = modifier === 'shift';
     const isRefine = modifier === 'ctrl' || modifier === 'shiftCtrl';
 
-    // Current position on wheel
+    // Current position on wheel (dx/dy are pixels from drag origin)
     const dist = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(-dy, dx);
     const hue = ((angle * 180 / Math.PI) + 360) % 360;
-    const sat = Math.min(100, (dist / (r * 2)) * 100);
+    const sat = Math.min(100, (dist / r) * 100);
 
     if (isRefine) {
       // REFINE MODE: locked hue → saturation/brightness square
@@ -312,7 +312,9 @@
 
     } else if (isAlpha) {
       // ALPHA MODE: checkerboard + color overlay with opacity slider
-      const alphaLevel = Math.max(0, Math.min(1, 0.5 - dy / (r * 4)));
+      // Map dy to alpha: dragging up = more opaque, down = more transparent
+      // Use WHEEL_SIZE as the full range so a full-height drag = full alpha range
+      const alphaLevel = Math.max(0, Math.min(1, 0.5 - dy / WHEEL_SIZE));
       const barH = WHEEL_SIZE - 16;
       const barX = WHEEL_SIZE - 24;
       const thumbY = 8 + (1 - alphaLevel) * barH;
@@ -369,7 +371,8 @@
     } else {
       // BASE MODE: HSL color wheel
       // Conic gradient for hue, radial gradient for saturation (white center)
-      const dotDist = Math.min(dist * 0.5, r - 4);
+      // Map mouse position 1:1, clamped to wheel radius
+      const dotDist = Math.min(dist, r - 4);
       const dotAngle = angle;
       const dotX = cx + Math.cos(dotAngle) * dotDist;
       const dotY = cy - Math.sin(dotAngle) * dotDist;

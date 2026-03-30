@@ -21,6 +21,10 @@ export interface DragModifierConfig {
   invertX?: boolean;
   /** Invert vertical drag direction (default: false) */
   invertY?: boolean;
+  /** Horizontal sensitivity multiplier (default: 1). Set to 0 to lock X axis. */
+  sensitivityX?: number;
+  /** Vertical sensitivity multiplier (default: 1). Set to 0 to lock Y axis. */
+  sensitivityY?: number;
 }
 
 /** Drag config mapping modifier states to behaviors */
