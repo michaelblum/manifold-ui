@@ -217,12 +217,21 @@
       // Update modifier from pointer event (keyboard events don't fire during pointer capture)
       updateModifierFromEvent(e);
 
-      // Update drag deltas (from drag start, not pointer down)
-      controller.dragState.dragDx = e.clientX - downX;
-      controller.dragState.dragDy = e.clientY - downY;
-
       // Call the drag handler (re-read config in case modifier changed)
       const dragConfig = getDragConfig();
+
+      // Raw deltas from pointer origin
+      const rawDx = e.clientX - downX;
+      const rawDy = e.clientY - downY;
+
+      // Apply axis inversion if configured
+      const effectiveDx = dragConfig?.invertX ? -rawDx : rawDx;
+      const effectiveDy = dragConfig?.invertY ? -rawDy : rawDy;
+
+      // Store inverted deltas so HUD visual matches the value direction
+      controller.dragState.dragDx = effectiveDx;
+      controller.dragState.dragDy = effectiveDy;
+
       if (dragConfig) {
         // Update HUD type if modifier changed
         controller.dragState.hudType = dragConfig.type;
@@ -235,13 +244,7 @@
           working[key] = groupValues[key];
         }
 
-        dragConfig.handler(
-          controller.dragState.dragDx,
-          controller.dragState.dragDy,
-          working,
-          controller.dragState.snapshot!,
-          member
-        );
+        dragConfig.handler(effectiveDx, effectiveDy, working, controller.dragState.snapshot!, member);
 
         controller.set(groupId, working);
       }

@@ -1,5 +1,5 @@
 /** HUD visual type displayed during drag */
-export type HudType = 'slider_1d' | 'axis_2d' | 'axis_3d' | 'dial';
+export type HudType = 'slider_1d' | 'axis_2d' | 'axis_3d' | 'axis_3d_tilt' | 'dial';
 
 /** Modifier key state */
 export type Modifier = 'base' | 'shift' | 'ctrl' | 'shiftCtrl';
@@ -17,6 +17,10 @@ export type DragHandler = (
 export interface DragModifierConfig {
   type: HudType;
   handler: DragHandler;
+  /** Invert horizontal drag direction (default: false) */
+  invertX?: boolean;
+  /** Invert vertical drag direction (default: false) */
+  invertY?: boolean;
 }
 
 /** Drag config mapping modifier states to behaviors */
