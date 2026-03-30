@@ -250,6 +250,15 @@
   const WHEEL_HALF = WHEEL_SIZE / 2;
   const WHEEL_RADIUS = WHEEL_HALF - 8;
 
+  function getCurrentAlpha(): number {
+    // Try to read alpha from the active group's values
+    const gid = controller.dragState.groupId;
+    if (!gid) return 1;
+    const vals = controller.values[gid];
+    if (vals && 'a' in vals) return vals.a;
+    return 1;
+  }
+
   function buildColorWheel(dx: number, dy: number, modifier: string): string {
     const cx = WHEEL_HALF;
     const cy = WHEEL_HALF;
@@ -378,10 +387,20 @@
       const dotX = cx + dx * clampScale;
       const dotY = cy + dy * clampScale;
 
+      const alpha = getCurrentAlpha();
+
       return `<div style="
         width: ${WHEEL_SIZE}px; height: ${WHEEL_SIZE}px;
         position: relative;
       ">
+        <!-- Checkerboard behind wheel to show alpha -->
+        ${alpha < 1 ? `<div style="
+          position: absolute;
+          width: ${r * 2}px; height: ${r * 2}px;
+          left: ${WHEEL_HALF - r}px; top: ${WHEEL_HALF - r}px;
+          border-radius: 50%; overflow: hidden;
+          background: repeating-conic-gradient(#444 0% 25%, #666 0% 50%) 50% / 12px 12px;
+        "></div>` : ''}
         <!-- Color wheel -->
         <div style="
           width: ${r * 2}px; height: ${r * 2}px;
@@ -394,6 +413,7 @@
             hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%),
             hsl(360,100%,50%)
           );
+          opacity: ${alpha};
           position: relative;
           border: 1px solid rgba(255,255,255,0.15);
         ">
@@ -420,12 +440,14 @@
   $effect(() => {
     if (!portal) return;
     const ds = controller.dragState;
+    // Read modifier eagerly to ensure Svelte tracks it as a dependency
+    const mod = controller.modifier;
 
     if (ds.active && ds.hudType !== null) {
       portal.style.display = 'block';
 
       // Determine size — some HUDs are larger
-      const isAxis3dZ = ds.hudType === 'axis_3d' && (controller.modifier === 'shift' || controller.modifier === 'shiftCtrl');
+      const isAxis3dZ = ds.hudType === 'axis_3d' && (mod === 'shift' || mod === 'shiftCtrl');
       const isWheel = ds.hudType === 'color_wheel';
       const hudW = isWheel ? WHEEL_SIZE : HUD_SIZE;
       const hudH = isAxis3dZ ? HUD_SIZE + 40 : (isWheel ? WHEEL_SIZE : HUD_SIZE);
@@ -445,10 +467,10 @@
           html = buildAxis2d(ds.dragDx, ds.dragDy);
           break;
         case 'axis_3d':
-          html = buildAxis3d(ds.dragDx, ds.dragDy, controller.modifier);
+          html = buildAxis3d(ds.dragDx, ds.dragDy, mod);
           break;
         case 'axis_3d_tilt':
-          html = buildAxis3dTilt(ds.dragDx, ds.dragDy, controller.modifier);
+          html = buildAxis3dTilt(ds.dragDx, ds.dragDy, mod);
           break;
         case 'slider_1d':
           html = buildSlider1d(ds.dragDx, ds.dragDy);
@@ -457,7 +479,7 @@
           html = buildDial(ds.dragDx, ds.dragDy);
           break;
         case 'color_wheel':
-          html = buildColorWheel(ds.dragDx, ds.dragDy, controller.modifier);
+          html = buildColorWheel(ds.dragDx, ds.dragDy, mod);
           break;
       }
 
