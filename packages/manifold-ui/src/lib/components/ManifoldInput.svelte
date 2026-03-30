@@ -120,6 +120,22 @@
     }
   }
 
+  // --- Modifier detection from pointer events ---
+  // During pointer capture, keyboard events don't fire on the captured element.
+  // Pointer events carry shiftKey/ctrlKey/metaKey, so we read modifiers from there.
+  function updateModifierFromEvent(e: PointerEvent) {
+    const isCtrl = e.ctrlKey || e.metaKey;
+    if (e.shiftKey && isCtrl) {
+      controller.setModifier('shiftCtrl');
+    } else if (e.shiftKey) {
+      controller.setModifier('shift');
+    } else if (isCtrl) {
+      controller.setModifier('ctrl');
+    } else {
+      controller.setModifier('base');
+    }
+  }
+
   // --- Pointer / Drag ---
   function onPointerDownWhileEditing(e: PointerEvent) {
     // When editing, allow native text selection on click.
@@ -198,13 +214,19 @@
     }
 
     if (controller.dragState.active) {
+      // Update modifier from pointer event (keyboard events don't fire during pointer capture)
+      updateModifierFromEvent(e);
+
       // Update drag deltas (from drag start, not pointer down)
       controller.dragState.dragDx = e.clientX - downX;
       controller.dragState.dragDy = e.clientY - downY;
 
-      // Call the drag handler
+      // Call the drag handler (re-read config in case modifier changed)
       const dragConfig = getDragConfig();
       if (dragConfig) {
+        // Update HUD type if modifier changed
+        controller.dragState.hudType = dragConfig.type;
+
         dragConfig.handler(
           controller.dragState.dragDx,
           controller.dragState.dragDy,
