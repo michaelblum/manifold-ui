@@ -101,30 +101,80 @@
         </svg>
       </div>`;
     } else {
-      // Tilted Z mode — circle in perspective with Z-axis dotted line
-      // Dot moves only vertically (above/below center = Z value)
-      const maxTravel = r - 6;
-      const dotOffset = Math.max(-maxTravel, Math.min(maxTravel, -dy * 0.5));
-      const dotY = cy + dotOffset;
+      // Z-mode: translucent 3D cylinder with shaded ball
+      const cylW = HUD_SIZE;
+      const cylH = HUD_SIZE + 40; // Taller for cylinder
+      const cylCx = cylW / 2;
+      const cylRx = r * 0.85; // Horizontal radius of ellipses
+      const cylRy = r * 0.28; // Vertical radius (perspective compression)
+      const cylTop = 16; // Y of top ellipse center
+      const cylBot = cylH - 16; // Y of bottom ellipse center
+      const cylMidY = (cylTop + cylBot) / 2;
 
-      return `<div style="transform: perspective(200px) rotateX(${tiltAngle}deg); transition: transform 0.25s ease;">
-        <svg width="${HUD_SIZE}" height="${HUD_SIZE}" viewBox="0 0 ${HUD_SIZE} ${HUD_SIZE}">
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
-            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="1.5"/>
-          <!-- Horizontal equator line (the XY plane seen from angle) -->
-          <line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}"
-            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="1" stroke-dasharray="4,4"/>
-          <!-- Z axis line (vertical, prominent) -->
-          <line x1="${cx}" y1="${cy - r}" x2="${cx}" y2="${cy + r}"
-            stroke="var(--manifold-hud-accent, #06b6d4)" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.6"/>
-          <!-- Dot on Z axis -->
-          <circle cx="${cx}" cy="${dotY}" r="5"
-            fill="var(--manifold-hud-accent, #06b6d4)"/>
-          <!-- Z label -->
-          <text x="${cx + 10}" y="${cy - r + 10}" font-size="9" font-family="monospace"
-            fill="var(--manifold-hud-accent, #06b6d4)" opacity="0.7">Z</text>
-        </svg>
-      </div>`;
+      // Ball position along cylinder axis
+      const travel = (cylBot - cylTop) - cylRy * 2;
+      const ballOffset = Math.max(-travel / 2, Math.min(travel / 2, -dy * 0.5));
+      const ballY = cylMidY + ballOffset;
+      const ballR = 7;
+
+      return `<svg width="${cylW}" height="${cylH}" viewBox="0 0 ${cylW} ${cylH}">
+        <defs>
+          <!-- Cylinder body gradient -->
+          <linearGradient id="manifold-cyl-body" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.08"/>
+            <stop offset="35%" stop-color="#06b6d4" stop-opacity="0.15"/>
+            <stop offset="65%" stop-color="#06b6d4" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.05"/>
+          </linearGradient>
+          <!-- Ball shading gradient -->
+          <radialGradient id="manifold-ball-grad" cx="0.35" cy="0.3" r="0.65">
+            <stop offset="0%" stop-color="#67e8f9"/>
+            <stop offset="50%" stop-color="#06b6d4"/>
+            <stop offset="100%" stop-color="#0e7490"/>
+          </radialGradient>
+          <!-- Top cap gradient for 3D rim -->
+          <radialGradient id="manifold-cap-top" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.06"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.02"/>
+          </radialGradient>
+        </defs>
+
+        <!-- Cylinder body (rect between ellipses) -->
+        <rect x="${cylCx - cylRx}" y="${cylTop}" width="${cylRx * 2}" height="${cylBot - cylTop}"
+          fill="url(#manifold-cyl-body)"/>
+
+        <!-- Cylinder side edges -->
+        <line x1="${cylCx - cylRx}" y1="${cylTop}" x2="${cylCx - cylRx}" y2="${cylBot}"
+          stroke="#06b6d4" stroke-opacity="0.25" stroke-width="1"/>
+        <line x1="${cylCx + cylRx}" y1="${cylTop}" x2="${cylCx + cylRx}" y2="${cylBot}"
+          stroke="#06b6d4" stroke-opacity="0.25" stroke-width="1"/>
+
+        <!-- Bottom ellipse (behind ball) -->
+        <ellipse cx="${cylCx}" cy="${cylBot}" rx="${cylRx}" ry="${cylRy}"
+          fill="#06b6d4" fill-opacity="0.06"
+          stroke="#06b6d4" stroke-opacity="0.2" stroke-width="1"/>
+
+        <!-- Center axis dotted line -->
+        <line x1="${cylCx}" y1="${cylTop - cylRy}" x2="${cylCx}" y2="${cylBot + cylRy}"
+          stroke="#06b6d4" stroke-opacity="0.3" stroke-width="0.8" stroke-dasharray="3,4"/>
+
+        <!-- Shaded 3D ball -->
+        <circle cx="${cylCx}" cy="${ballY}" r="${ballR}"
+          fill="url(#manifold-ball-grad)"
+          stroke="#06b6d4" stroke-opacity="0.4" stroke-width="0.5"/>
+        <!-- Ball highlight -->
+        <circle cx="${cylCx - 2}" cy="${ballY - 2}" r="${ballR * 0.35}"
+          fill="white" fill-opacity="0.4"/>
+
+        <!-- Top ellipse (in front, drawn last) -->
+        <ellipse cx="${cylCx}" cy="${cylTop}" rx="${cylRx}" ry="${cylRy}"
+          fill="url(#manifold-cap-top)"
+          stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1"/>
+
+        <!-- Z label -->
+        <text x="${cylCx + cylRx + 6}" y="${cylTop + 4}" font-size="9" font-family="monospace"
+          fill="#06b6d4" opacity="0.6">Z</text>
+      </svg>`;
     }
   }
 
@@ -154,13 +204,17 @@
     if (ds.active && ds.hudType !== null) {
       portal.style.display = 'block';
 
-      // Position at drag origin
+      // Determine height — axis_3d cylinder is taller
+      const isAxis3dZ = ds.hudType === 'axis_3d' && (controller.modifier === 'shift' || controller.modifier === 'shiftCtrl');
+      const hudH = isAxis3dZ ? HUD_SIZE + 40 : HUD_SIZE;
+
+      // Position centered at drag origin
       const ox = ds.startX;
       const oy = ds.startY;
       portal.style.left = `${ox - HUD_HALF}px`;
-      portal.style.top = `${oy - HUD_HALF}px`;
+      portal.style.top = `${oy - hudH / 2}px`;
       portal.style.width = `${HUD_SIZE}px`;
-      portal.style.height = `${HUD_SIZE}px`;
+      portal.style.height = `${hudH}px`;
 
       let html = '';
       switch (ds.hudType) {
