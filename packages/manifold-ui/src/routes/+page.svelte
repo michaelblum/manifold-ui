@@ -3,6 +3,7 @@
   import ManifoldPanel from '$lib/components/ManifoldPanel.svelte';
   import ManifoldGroup from '$lib/components/ManifoldGroup.svelte';
   import ManifoldInput from '$lib/components/ManifoldInput.svelte';
+  import ManifoldCompoundInput from '$lib/components/ManifoldCompoundInput.svelte';
   import { createManifold } from '$lib/builders/manifold.svelte';
   import type { ManifoldSchema, DragHandler } from '$lib/builders/types';
 
@@ -147,6 +148,36 @@
           <ManifoldInput member="r" label="R" />
           <ManifoldInput member="g" label="G" />
           <ManifoldInput member="b" label="B" />
+        </ManifoldGroup>
+        <ManifoldGroup id="alpha" label="Opacity">
+          <ManifoldInput member="a" label="A" />
+        </ManifoldGroup>
+      </ManifoldPanel>
+
+      <div class="color-preview-row">
+        <div
+          class="color-swatch"
+          style="background: {colorPreview};"
+        ></div>
+        <code class="color-value">{colorPreview}</code>
+      </div>
+    </section>
+
+    <!-- Demo 3: Compound Input -->
+    <section class="demo-section">
+      <h2 class="demo-heading">Compound Input</h2>
+      <p class="demo-desc">
+        A single input showing multiple values with a format pattern.
+        Drag to adjust all values. Click to type.
+      </p>
+
+      <ManifoldPanel controller={colorController} title="Color (Compound)">
+        <ManifoldGroup id="color" label="RGB">
+          <ManifoldCompoundInput
+            members={['r', 'g', 'b']}
+            pattern={'rgb({r}, {g}, {b})'}
+            label="Color"
+          />
         </ManifoldGroup>
         <ManifoldGroup id="alpha" label="Opacity">
           <ManifoldInput member="a" label="A" />

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "manifold-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/Michael/Documents/GitHub/manifold-ui/packages/manifold-ui && npx vite dev --port 5179"],
+      "port": 5179
+    }
+  ]
+}
