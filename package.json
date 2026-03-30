@@ -1,0 +1,15 @@
+{
+  "name": "manifold-ui-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter manifold-ui run dev",
+    "build": "pnpm --filter manifold-ui run build",
+    "test": "pnpm --filter manifold-ui run test",
+    "check": "pnpm --filter manifold-ui run check",
+    "package": "pnpm --filter manifold-ui run package"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.0"
+  }
+}
