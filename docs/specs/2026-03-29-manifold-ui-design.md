@@ -80,6 +80,21 @@ The builder owns: drag lifecycle state, modifier tracking, snapshot/revert for E
 
 **Initial values:** Each group config accepts an `initial` object. Members default to `0` if not specified. The builder populates `manifold.values` from these on creation.
 
+**Two-way binding:** The builder can borrow an external reactive object instead of creating its own:
+
+```typescript
+let transform = $state({ position: { x: 0, y: 0, z: 0 } });
+
+const manifold = createManifold({
+  values: transform,   // uses this object by reference, not a copy
+  groups: [...]
+})
+// manifold.values === transform — same reactive reference
+// drag changes transform. code changes transform. both directions work.
+```
+
+When the consumer provides a `values` object, the builder uses it directly. This enables zero-adapter integration with external systems (e.g., Three.js mesh properties). If no `values` object is provided, the builder creates its own internal state from `initial` values. The Layer 3 schema API exposes this via standard Svelte `bind:values`.
+
 ### Layer 2 — Components
 
 Thin Svelte wrappers that consume a builder via context and bind to the DOM.
