@@ -315,7 +315,8 @@
       // ALPHA MODE: checkerboard + color overlay with opacity slider
       // Map dy to alpha: dragging up = more opaque, down = more transparent
       // Use WHEEL_SIZE as the full range so a full-height drag = full alpha range
-      const alphaLevel = Math.max(0, Math.min(1, 0.5 - dy / WHEEL_SIZE));
+      // 80px drag = full range, matching handler sensitivity
+      const alphaLevel = Math.max(0, Math.min(1, 0.5 - dy / 80));
       const barH = WHEEL_SIZE - 16;
       const barX = WHEEL_SIZE - 24;
       const thumbY = 8 + (1 - alphaLevel) * barH;

@@ -107,8 +107,8 @@
 
   const colorWheelAlphaHandler: DragHandler = (dx, dy, current, start) => {
     // Shift: alpha mode — dy controls opacity
-    // Scale to match WHEEL_SIZE (160px) = full 0-1 range
-    current.a = Math.max(0, Math.min(1, (start.a ?? 1) - dy / 160));
+    // 80px of drag = full 0-1 range
+    current.a = Math.max(0, Math.min(1, (start.a ?? 1) - dy / 80));
   };
 
   const wheelController = createManifold({
