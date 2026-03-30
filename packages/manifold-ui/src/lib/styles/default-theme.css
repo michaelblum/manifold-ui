@@ -1,0 +1,30 @@
+/* manifold-ui default theme — dark glass-morphism */
+:root {
+  /* Panel */
+  --manifold-bg: #13111c;
+  --manifold-bg-active: #1a1525;
+  --manifold-border: #2d2640;
+  --manifold-border-active: #3b2f56;
+  --manifold-accent: #9d4edd;
+  --manifold-accent-hover: #b56eee;
+  --manifold-text: #e2e8f0;
+  --manifold-text-dim: #94a3b8;
+  --manifold-text-label: #cbd5e1;
+  --manifold-radius: 6px;
+  --manifold-radius-panel: 12px;
+  --manifold-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  --manifold-font-label: system-ui, -apple-system, sans-serif;
+
+  /* Inputs */
+  --manifold-input-bg: #1a1525;
+  --manifold-input-bg-focus: #211a30;
+  --manifold-input-border: #3b2f56;
+  --manifold-input-border-focus: #9d4edd;
+
+  /* HUD */
+  --manifold-hud-bg: rgba(19, 17, 28, 0.85);
+  --manifold-hud-border: #2d2640;
+  --manifold-hud-accent: #06b6d4;
+  --manifold-hud-accent-alt: #c084fc;
+  --manifold-hud-backdrop-blur: 12px;
+}
