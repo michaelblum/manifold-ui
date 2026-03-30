@@ -1,5 +1,5 @@
 /** HUD visual type displayed during drag */
-export type HudType = 'slider_1d' | 'axis_2d' | 'axis_3d' | 'axis_3d_tilt' | 'dial';
+export type HudType = 'slider_1d' | 'axis_2d' | 'axis_3d' | 'axis_3d_tilt' | 'dial' | 'color_wheel';
 
 /** Modifier key state */
 export type Modifier = 'base' | 'shift' | 'ctrl' | 'shiftCtrl';

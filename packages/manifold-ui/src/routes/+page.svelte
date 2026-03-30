@@ -5,6 +5,7 @@
   import ManifoldInput from '$lib/components/ManifoldInput.svelte';
   import ManifoldCompoundInput from '$lib/components/ManifoldCompoundInput.svelte';
   import { createManifold } from '$lib/builders/manifold.svelte';
+  import { hslToRgb, rgbToHsl } from '$lib/builders/color';
   import type { ManifoldSchema, DragHandler } from '$lib/builders/types';
 
   // ===========================================
@@ -112,6 +113,59 @@
     ]
   });
 
+  // ===========================================
+  // Demo 4: Color Wheel HUD
+  // ===========================================
+
+  const colorWheelHandler: DragHandler = (dx, dy, current, start) => {
+    // Map drag position to hue (angle) and saturation (distance)
+    const radius = 72; // matches WHEEL_RADIUS
+    const angle = Math.atan2(-dy, dx);
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const hue = ((angle * 180 / Math.PI) + 360) % 360;
+    const sat = Math.min(100, (dist / (radius * 2)) * 100);
+    const rgb = hslToRgb(hue, sat, 50);
+    current.r = rgb.r;
+    current.g = rgb.g;
+    current.b = rgb.b;
+  };
+
+  const colorWheelRefineHandler: DragHandler = (dx, dy, current, start) => {
+    // Ctrl: refine mode — dx = saturation, dy = lightness
+    const hsl = rgbToHsl(start.r, start.g, start.b);
+    const sat = Math.max(0, Math.min(100, 50 + dx * 0.5));
+    const light = Math.max(0, Math.min(100, 50 - dy * 0.5));
+    const rgb = hslToRgb(hsl.h, sat, light);
+    current.r = rgb.r;
+    current.g = rgb.g;
+    current.b = rgb.b;
+  };
+
+  const colorWheelAlphaHandler: DragHandler = (dx, dy, current, start) => {
+    // Shift: alpha mode — dy controls opacity
+    current.a = Math.max(0, Math.min(1, (start.a ?? 1) - dy * 0.005));
+  };
+
+  const wheelController = createManifold({
+    groups: [
+      {
+        id: 'color',
+        members: ['r', 'g', 'b', 'a'],
+        initial: { r: 157, g: 78, b: 221, a: 1 },
+        config: { min: 0, max: 255, step: 1 },
+        inputDrag: {
+          base: { type: 'color_wheel', handler: colorWheelHandler },
+          ctrl: { type: 'color_wheel', handler: colorWheelRefineHandler },
+          shift: { type: 'color_wheel', handler: colorWheelAlphaHandler }
+        }
+      }
+    ]
+  });
+
+  let wheelPreview = $derived(
+    `rgba(${Math.round(wheelController.values.color?.r ?? 0)}, ${Math.round(wheelController.values.color?.g ?? 0)}, ${Math.round(wheelController.values.color?.b ?? 0)}, ${wheelController.values.color?.a ?? 1})`
+  );
+
   let colorPreview = $derived(
     `rgba(${Math.round(colorController.values.color?.r ?? 0)}, ${Math.round(colorController.values.color?.g ?? 0)}, ${Math.round(colorController.values.color?.b ?? 0)}, ${colorController.values.alpha?.a ?? 1})`
   );
@@ -163,7 +217,35 @@
       </div>
     </section>
 
-    <!-- Demo 3: Compound Input -->
+    <!-- Demo 3: Color Wheel HUD -->
+    <section class="demo-section">
+      <h2 class="demo-heading">Color Wheel HUD</h2>
+      <p class="demo-desc">
+        Drag to pick hue + saturation on the wheel.
+        Hold <kbd>Ctrl/Cmd</kbd> to refine (saturation/brightness square).
+        Hold <kbd>Shift</kbd> for alpha slider.
+      </p>
+
+      <ManifoldPanel controller={wheelController} title="Color Wheel">
+        <ManifoldGroup id="color" label="RGBA">
+          <ManifoldCompoundInput
+            members={['r', 'g', 'b', 'a']}
+            pattern={'rgba({r}, {g}, {b}, {a})'}
+            label="Color"
+          />
+        </ManifoldGroup>
+      </ManifoldPanel>
+
+      <div class="color-preview-row">
+        <div
+          class="color-swatch"
+          style="background: {wheelPreview};"
+        ></div>
+        <code class="color-value">{wheelPreview}</code>
+      </div>
+    </section>
+
+    <!-- Demo 4: Compound Input -->
     <section class="demo-section">
       <h2 class="demo-heading">Compound Input</h2>
       <p class="demo-desc">

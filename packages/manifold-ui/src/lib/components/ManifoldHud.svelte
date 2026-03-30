@@ -246,6 +246,173 @@
     </svg>`;
   }
 
+  const WHEEL_SIZE = 160;
+  const WHEEL_HALF = WHEEL_SIZE / 2;
+  const WHEEL_RADIUS = WHEEL_HALF - 8;
+
+  function buildColorWheel(dx: number, dy: number, modifier: string): string {
+    const cx = WHEEL_HALF;
+    const cy = WHEEL_HALF;
+    const r = WHEEL_RADIUS;
+    const isAlpha = modifier === 'shift';
+    const isRefine = modifier === 'ctrl' || modifier === 'shiftCtrl';
+
+    // Current position on wheel
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(-dy, dx);
+    const hue = ((angle * 180 / Math.PI) + 360) % 360;
+    const sat = Math.min(100, (dist / (r * 2)) * 100);
+
+    if (isRefine) {
+      // REFINE MODE: locked hue → saturation/brightness square
+      // The square shows the locked hue with:
+      //   X axis: saturation (left=0, right=100)
+      //   Y axis: lightness (top=100/bright, bottom=0/dark)
+      const sqSize = WHEEL_SIZE - 16;
+      const sqX = 8;
+      const sqY = 8;
+
+      // Map dx/dy to position in square
+      const normX = Math.max(0, Math.min(1, 0.5 + dx / (sqSize * 2)));
+      const normY = Math.max(0, Math.min(1, 0.5 + dy / (sqSize * 2)));
+      const dotX = sqX + normX * sqSize;
+      const dotY = sqY + normY * sqSize;
+
+      // Build the hue-specific color for the gradient
+      const hueColor = `hsl(${Math.round(hue)}, 100%, 50%)`;
+
+      return `<div style="
+        width: ${WHEEL_SIZE}px; height: ${WHEEL_SIZE}px;
+        border-radius: 8px; overflow: hidden; position: relative;
+        border: 1px solid rgba(255,255,255,0.15);
+        transition: border-radius 0.2s;
+      ">
+        <!-- Saturation gradient: white to hue color -->
+        <div style="
+          position: absolute; inset: 0;
+          background: linear-gradient(to right, white, ${hueColor});
+        "></div>
+        <!-- Brightness gradient: transparent to black -->
+        <div style="
+          position: absolute; inset: 0;
+          background: linear-gradient(to bottom, transparent, black);
+        "></div>
+        <!-- Crosshair -->
+        <svg style="position: absolute; inset: 0;" width="${WHEEL_SIZE}" height="${WHEEL_SIZE}">
+          <line x1="${dotX}" y1="0" x2="${dotX}" y2="${WHEEL_SIZE}"
+            stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+          <line x1="0" y1="${dotY}" x2="${WHEEL_SIZE}" y2="${dotY}"
+            stroke="rgba(255,255,255,0.4)" stroke-width="0.5"/>
+          <circle cx="${dotX}" cy="${dotY}" r="6" fill="none"
+            stroke="white" stroke-width="1.5"/>
+          <circle cx="${dotX}" cy="${dotY}" r="5" fill="none"
+            stroke="black" stroke-width="0.5"/>
+        </svg>
+      </div>`;
+
+    } else if (isAlpha) {
+      // ALPHA MODE: checkerboard + color overlay with opacity slider
+      const alphaLevel = Math.max(0, Math.min(1, 0.5 - dy / (r * 4)));
+      const barH = WHEEL_SIZE - 16;
+      const barX = WHEEL_SIZE - 24;
+      const thumbY = 8 + (1 - alphaLevel) * barH;
+
+      return `<div style="
+        width: ${WHEEL_SIZE}px; height: ${WHEEL_SIZE}px;
+        position: relative;
+      ">
+        <!-- Wheel (dimmed) -->
+        <div style="
+          width: ${WHEEL_SIZE - 32}px; height: ${WHEEL_SIZE - 32}px;
+          margin: 8px; border-radius: 50%;
+          background: conic-gradient(
+            hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%),
+            hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%)
+          );
+          opacity: ${0.3 + alphaLevel * 0.5};
+          transition: opacity 0.1s;
+          position: relative;
+        ">
+          <div style="
+            position: absolute; inset: 15%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+          "></div>
+          <!-- Checkerboard pattern underneath -->
+        </div>
+        <!-- Alpha slider bar -->
+        <svg style="position: absolute; right: 0; top: 0;" width="24" height="${WHEEL_SIZE}">
+          <!-- Checkerboard background for slider -->
+          <defs>
+            <pattern id="manifold-checker" width="8" height="8" patternUnits="userSpaceOnUse">
+              <rect width="4" height="4" fill="#999"/>
+              <rect x="4" y="4" width="4" height="4" fill="#999"/>
+              <rect x="4" width="4" height="4" fill="#666"/>
+              <rect y="4" width="4" height="4" fill="#666"/>
+            </pattern>
+          </defs>
+          <rect x="6" y="8" width="12" height="${barH}" rx="6" fill="url(#manifold-checker)"/>
+          <rect x="6" y="8" width="12" height="${barH}" rx="6"
+            fill="linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0))"
+            opacity="0.8"/>
+          <!-- Thumb -->
+          <circle cx="12" cy="${thumbY}" r="6"
+            fill="white" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
+          <!-- Label -->
+          <text x="12" y="${WHEEL_SIZE - 2}" text-anchor="middle"
+            font-size="7" font-family="monospace" fill="rgba(255,255,255,0.5)">
+            ${Math.round(alphaLevel * 100)}%
+          </text>
+        </svg>
+      </div>`;
+
+    } else {
+      // BASE MODE: HSL color wheel
+      // Conic gradient for hue, radial gradient for saturation (white center)
+      const dotDist = Math.min(dist * 0.5, r - 4);
+      const dotAngle = angle;
+      const dotX = cx + Math.cos(dotAngle) * dotDist;
+      const dotY = cy - Math.sin(dotAngle) * dotDist;
+
+      return `<div style="
+        width: ${WHEEL_SIZE}px; height: ${WHEEL_SIZE}px;
+        position: relative;
+      ">
+        <!-- Color wheel -->
+        <div style="
+          width: ${r * 2}px; height: ${r * 2}px;
+          margin: ${WHEEL_HALF - r}px;
+          border-radius: 50%;
+          background: conic-gradient(
+            hsl(0,100%,50%), hsl(30,100%,50%), hsl(60,100%,50%),
+            hsl(90,100%,50%), hsl(120,100%,50%), hsl(150,100%,50%),
+            hsl(180,100%,50%), hsl(210,100%,50%), hsl(240,100%,50%),
+            hsl(270,100%,50%), hsl(300,100%,50%), hsl(330,100%,50%),
+            hsl(360,100%,50%)
+          );
+          position: relative;
+          border: 1px solid rgba(255,255,255,0.15);
+        ">
+          <!-- White-to-transparent radial for saturation -->
+          <div style="
+            position: absolute; inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, transparent 70%);
+          "></div>
+        </div>
+        <!-- Crosshair dot -->
+        <svg style="position: absolute; inset: 0;" width="${WHEEL_SIZE}" height="${WHEEL_SIZE}">
+          <circle cx="${dotX}" cy="${dotY}" r="6" fill="none"
+            stroke="white" stroke-width="1.5" filter="drop-shadow(0 0 2px rgba(0,0,0,0.5))"/>
+          <circle cx="${dotX}" cy="${dotY}" r="5" fill="none"
+            stroke="black" stroke-width="0.5"/>
+          <circle cx="${dotX}" cy="${dotY}" r="2"
+            fill="hsl(${Math.round(hue)}, ${Math.round(sat)}%, 50%)"/>
+        </svg>
+      </div>`;
+    }
+  }
+
   $effect(() => {
     if (!portal) return;
     const ds = controller.dragState;
@@ -253,16 +420,19 @@
     if (ds.active && ds.hudType !== null) {
       portal.style.display = 'block';
 
-      // Determine height — axis_3d cylinder is taller
+      // Determine size — some HUDs are larger
       const isAxis3dZ = ds.hudType === 'axis_3d' && (controller.modifier === 'shift' || controller.modifier === 'shiftCtrl');
-      const hudH = isAxis3dZ ? HUD_SIZE + 40 : HUD_SIZE;
+      const isWheel = ds.hudType === 'color_wheel';
+      const hudW = isWheel ? WHEEL_SIZE : HUD_SIZE;
+      const hudH = isAxis3dZ ? HUD_SIZE + 40 : (isWheel ? WHEEL_SIZE : HUD_SIZE);
+      const hudHalfW = hudW / 2;
 
       // Position centered at drag origin
       const ox = ds.startX;
       const oy = ds.startY;
-      portal.style.left = `${ox - HUD_HALF}px`;
+      portal.style.left = `${ox - hudHalfW}px`;
       portal.style.top = `${oy - hudH / 2}px`;
-      portal.style.width = `${HUD_SIZE}px`;
+      portal.style.width = `${hudW}px`;
       portal.style.height = `${hudH}px`;
 
       let html = '';
@@ -281,6 +451,9 @@
           break;
         case 'dial':
           html = buildDial(ds.dragDx, ds.dragDy);
+          break;
+        case 'color_wheel':
+          html = buildColorWheel(ds.dragDx, ds.dragDy, controller.modifier);
           break;
       }
 
