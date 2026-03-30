@@ -70,6 +70,64 @@
     </svg>`;
   }
 
+  function buildAxis3d(dx: number, dy: number, modifier: string): string {
+    const cx = HUD_HALF;
+    const cy = HUD_HALF;
+    const r = HUD_HALF - 4;
+    const isZMode = modifier === 'shift' || modifier === 'shiftCtrl';
+
+    // Perspective tilt amount (0 = flat, 1 = fully tilted)
+    // We use CSS perspective on the portal container for the 3D effect
+    const tiltAngle = isZMode ? 55 : 0;
+
+    if (!isZMode) {
+      // Flat XY mode — same as axis_2d but with subtle depth ring
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const maxDist = r - 4;
+      const scale = dist > maxDist ? maxDist / dist : 1;
+      const dotX = cx + dx * scale * 0.5;
+      const dotY = cy + dy * scale * 0.5;
+
+      return `<div style="transform: perspective(200px) rotateX(${tiltAngle}deg); transition: transform 0.25s ease;">
+        <svg width="${HUD_SIZE}" height="${HUD_SIZE}" viewBox="0 0 ${HUD_SIZE} ${HUD_SIZE}">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="1.5"/>
+          <line x1="${cx}" y1="${cy - r}" x2="${cx}" y2="${cy + r}"
+            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="0.5" stroke-dasharray="2,3"/>
+          <line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}"
+            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="0.5" stroke-dasharray="2,3"/>
+          <circle cx="${dotX}" cy="${dotY}" r="5"
+            fill="var(--manifold-hud-accent, #06b6d4)"/>
+        </svg>
+      </div>`;
+    } else {
+      // Tilted Z mode — circle in perspective with Z-axis dotted line
+      // Dot moves only vertically (above/below center = Z value)
+      const maxTravel = r - 6;
+      const dotOffset = Math.max(-maxTravel, Math.min(maxTravel, -dy * 0.5));
+      const dotY = cy + dotOffset;
+
+      return `<div style="transform: perspective(200px) rotateX(${tiltAngle}deg); transition: transform 0.25s ease;">
+        <svg width="${HUD_SIZE}" height="${HUD_SIZE}" viewBox="0 0 ${HUD_SIZE} ${HUD_SIZE}">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="1.5"/>
+          <!-- Horizontal equator line (the XY plane seen from angle) -->
+          <line x1="${cx - r}" y1="${cy}" x2="${cx + r}" y2="${cy}"
+            stroke="var(--manifold-hud-border, #2d2640)" stroke-width="1" stroke-dasharray="4,4"/>
+          <!-- Z axis line (vertical, prominent) -->
+          <line x1="${cx}" y1="${cy - r}" x2="${cx}" y2="${cy + r}"
+            stroke="var(--manifold-hud-accent, #06b6d4)" stroke-width="0.8" stroke-dasharray="3,3" opacity="0.6"/>
+          <!-- Dot on Z axis -->
+          <circle cx="${cx}" cy="${dotY}" r="5"
+            fill="var(--manifold-hud-accent, #06b6d4)"/>
+          <!-- Z label -->
+          <text x="${cx + 10}" y="${cy - r + 10}" font-size="9" font-family="monospace"
+            fill="var(--manifold-hud-accent, #06b6d4)" opacity="0.7">Z</text>
+        </svg>
+      </div>`;
+    }
+  }
+
   function buildDial(dx: number, dy: number): string {
     const cx = HUD_HALF;
     const cy = HUD_HALF;
@@ -104,20 +162,23 @@
       portal.style.width = `${HUD_SIZE}px`;
       portal.style.height = `${HUD_SIZE}px`;
 
-      let svg = '';
+      let html = '';
       switch (ds.hudType) {
         case 'axis_2d':
-          svg = buildAxis2d(ds.dragDx, ds.dragDy);
+          html = buildAxis2d(ds.dragDx, ds.dragDy);
+          break;
+        case 'axis_3d':
+          html = buildAxis3d(ds.dragDx, ds.dragDy, controller.modifier);
           break;
         case 'slider_1d':
-          svg = buildSlider1d(ds.dragDx, ds.dragDy);
+          html = buildSlider1d(ds.dragDx, ds.dragDy);
           break;
         case 'dial':
-          svg = buildDial(ds.dragDx, ds.dragDy);
+          html = buildDial(ds.dragDx, ds.dragDy);
           break;
       }
 
-      portal.innerHTML = svg;
+      portal.innerHTML = html;
     } else {
       portal.style.display = 'none';
       portal.innerHTML = '';
