@@ -227,13 +227,23 @@
         // Update HUD type if modifier changed
         controller.dragState.hudType = dragConfig.type;
 
+        // Create a plain working copy for the handler to mutate,
+        // then apply via controller.set() to ensure reactivity
+        const working: Record<string, number> = {};
+        const groupValues = controller.values[groupId];
+        for (const key of Object.keys(groupValues)) {
+          working[key] = groupValues[key];
+        }
+
         dragConfig.handler(
           controller.dragState.dragDx,
           controller.dragState.dragDy,
-          controller.values[groupId],
+          working,
           controller.dragState.snapshot!,
           member
         );
+
+        controller.set(groupId, working);
       }
     }
   }
