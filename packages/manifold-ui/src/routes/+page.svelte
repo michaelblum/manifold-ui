@@ -42,7 +42,13 @@
         initial: { x: 0, y: 0, z: 0 },
         config: { step: 0.1 },
         inputDrag: {
-          base: { type: 'axis_2d', handler: axis2dHandler }
+          base: { type: 'axis_2d', handler: axis2dHandler },
+          shift: {
+            type: 'slider_1d',
+            handler: (dx, dy, current, start) => {
+              current.z = start.z - dy * 0.5;
+            }
+          }
         }
       },
       {
